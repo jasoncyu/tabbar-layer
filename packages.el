@@ -33,9 +33,47 @@ which require an initialization must be listed explicitly in the list.")
 (defun tabbar/init-tabbar ()
   "Initialize tabbar"
   (use-package tabbar
-    :bind
-    (("M-<tab>" . tabbar-forward)
-     ("M-S-<tab>" . tabbar-backward))
+    :config
+    (spacemacs|define-transient-state tabbar
+      :title "Tabbar"
+      :doc "
+[_j_] tabbar-forward-tab [_k_] tabbar-backward-tab
+[_J_] tabbar-forward-group [_K_] tabbar-forward-group"
+      :bindings
+      ("q" nil :exit t)
+      ("j" tabbar-forward-tab)
+      ("k" tabbar-backward-tab)
+      ("J" tabbar-forward-group)
+      ("K" tabbar-backward-group))
+    (spacemacs/set-leader-keys "ot" 'spacemacs/tabbar-transient-state/body)
+
+    (setq tabbar-buffer-groups-function (lambda () '("asdf")))
+
+    (setq jason/buffers ())
+    (defun jason/add-to-my-buffers ()
+      (interactive) (cl-pushnew (current-buffer) jason/buffers))
+    ;; (print jason/buffers)
+    ;; (jason/add-to-my-buffers)
+    (global-set-key (kbd "H-<return>") #'jason/add-to-my-buffers)
+    (defun jason/my-buffers ()
+      "Buffers that I've opened. Used for tabbar"
+      jason/buffers)
+
+    (setq jason/recent-buffers ())
+    ;; Mostly works, but the tabbar disappears whne opening a new buffer
+    (defun jason/add-to-recent-buffers ()
+      "Hold the most recently opened n buffers"
+      (interactive)
+      (progn
+        (if (>= (length jason/recent-buffers) 10)
+            (setq jason/recent-buffers (-drop-last 1 jason/recent-buffers)))
+        (cl-pushnew (current-buffer) jason/recent-buffers)))
+    (defun jason/recent-buffers-func () jason/recent-buffers)
+    (jason/recent-buffers-func)
+
+    (setq tabbar-buffer-list-function 'jason/recent-buffers-func)
+    (global-set-key (kbd "H-<return>") #'jason/add-to-recent-buffers)
+
     :init
     (tabbar-mode 1)
     (set-face-attribute
@@ -86,7 +124,4 @@ That is, a string used to represent it on the tab bar."
           (tabbar-shorten
            label (max 1 (/ (window-width)
                            (length (tabbar-view
-                                    (tabbar-current-tabset)))))))))
-
-    )
-  )
+                                    (tabbar-current-tabset)))))))))))
