@@ -13,7 +13,7 @@
 
 (defvar tabbar-packages
   '(
-    tabbar
+    ;; tabbar
     )
   "List of all packages to install and/or initialize. Built-in packages
 which require an initialization must be listed explicitly in the list.")
@@ -68,10 +68,22 @@ which require an initialization must be listed explicitly in the list.")
         (if (>= (length jason/recent-buffers) 10)
             (setq jason/recent-buffers (-drop-last 1 jason/recent-buffers)))
         (cl-pushnew (current-buffer) jason/recent-buffers)))
+    (defun jason/remove-from-recent-buffers ()
+      "Remove current buffer from recent buffers."
+      (interactive)
+      (progn
+        (delete (current-buffer) jason/recent-buffers)))
     (defun jason/recent-buffers-func () jason/recent-buffers)
     (jason/recent-buffers-func)
 
-    (setq tabbar-buffer-list-function 'jason/recent-buffers-func)
+    (defun set-tabbar-buffer-list ()
+      (setq tabbar-buffer-list-function 'jason/recent-buffers-func))
+    (set-tabbar-buffer-list)
+    ;; The value is clobbered by persp-mode, so setting it in these hooks
+    (add-hook 'prog-mode-hook #'set-tabbar-buffer-list)
+    (add-hook 'text-mode-hook #'set-tabbar-buffer-list)
+    (add-hook 'kill-buffer-hook #'jason/remove-from-recent-buffers)
+
     (global-set-key (kbd "H-<return>") #'jason/add-to-recent-buffers)
 
     :init
